@@ -20,7 +20,7 @@ namespace HostsManager.Models
 
 		public override int GetHashCode()
 		{
-			return Domain.GetHashCode();
+			return Id;
 		}
 	}
 

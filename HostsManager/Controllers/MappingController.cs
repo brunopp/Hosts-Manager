@@ -12,7 +12,7 @@ using System.Web.Http.Controllers;
 
 namespace HostsManager.Controllers
 {
-	[TokenAuth]
+	//[TokenAuth]
     public class MappingController : ApiController
     {
 		HostsFile _hostsFile = HostsFile.Instance;
@@ -27,19 +27,16 @@ namespace HostsManager.Controllers
 			return _hostsFile.Get(domain, onlyActive);
 		}
 
-        // POST: api/Mapping
         public void Post(Mapping mapping)
         {
 			_hostsFile.Add(mapping);
         }
 
-        // PUT: api/Mapping/5
 		public void Put(int id, Mapping mapping)
         {
 			_hostsFile.Update(mapping, id);
         }
 
-        // DELETE: api/Mapping/5
 		public void Delete(int id)
         {
 			_hostsFile.Delete(id);
@@ -182,7 +179,7 @@ namespace HostsManager.Controllers
 	{
 		protected override bool IsAuthorized(HttpActionContext actionContext)
 		{
-			return true;//return HttpContext.Current.Application["Token"].ToString() == HttpContext.Current.Request.Headers["Token"].ToString();
+			return HttpContext.Current.Application["Token"].ToString() == HttpContext.Current.Request.Headers["Token"].ToString();
 		}
 	}
 }
