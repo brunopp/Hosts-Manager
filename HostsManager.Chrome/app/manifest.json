@@ -1,0 +1,18 @@
+{
+  "name": "Hosts Manager",
+  "version": "1.0",
+  "description": "Shows if a domain has it's IP address changed by windows hosts file.",
+  "background": {
+    "scripts": ["jquery-2.1.1.min.js" ,"background.js"],
+    "persistent": false
+  },
+  "page_action" :
+  {
+    "default_icon" : "icon-38.png",
+    "default_title" : "Current page is redirected."
+  },
+  "permissions" : [
+    "http://*/", "https://*/", "tabs"
+  ],
+  "manifest_version": 2
+}
