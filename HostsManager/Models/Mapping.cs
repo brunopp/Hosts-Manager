@@ -9,7 +9,7 @@ namespace HostsManager.Models
 	{
 		public int Id
 		{
-			get { return Domain.GetHashCode(); }
+			get { return Domain.GetHashCode() ^ IP.GetHashCode(); }
 		}
 
 		public bool Active { get; set; }
