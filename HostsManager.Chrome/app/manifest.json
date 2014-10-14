@@ -1,6 +1,6 @@
 {
 	"name": "Hosts Manager",
-	"version": "1.0",
+	"version": "1.0.1",
 	"description": "Shows a warning on websites that has its hostname mapped to an IP address specified in windows hosts file.",
 	"background": {
 		"scripts": [ "jquery-2.1.1.min.js", "background.js" ],

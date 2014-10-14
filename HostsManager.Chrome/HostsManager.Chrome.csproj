@@ -40,6 +40,10 @@
   <ItemGroup>
     <Content Include="app\background.js" />
     <Content Include="app\content-script.js" />
+    <Content Include="app\img\icon128.png" />
+    <Content Include="app\img\icon16.png" />
+    <Content Include="app\img\icon48.png" />
+    <Content Include="app\img\redirect.png" />
     <Content Include="app\jquery-2.1.1.min.js" />
     <Content Include="Properties\build\lib\Ionic.Zip.DLL" />
     <Content Include="Properties\build\lib\MSBuild.ExtensionPack.dll" />

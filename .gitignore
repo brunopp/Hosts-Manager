@@ -184,3 +184,6 @@ FakesAssemblies/
 
 # Special builds for chrome
 !**/Properties/build/
+
+#thumbs
+Thumbs.db
