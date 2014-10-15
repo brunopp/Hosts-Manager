@@ -18,6 +18,14 @@ namespace HostsManager.Models
 
 		public string IP { get; set; }
 
+		public int XLeft { get; set; }
+
+		public int? XRight { get; set; }
+
+		public int? YTop { get; set; }
+
+		public int? YBottom { get; set; }
+
 		public override int GetHashCode()
 		{
 			return Id;
