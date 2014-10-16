@@ -1,6 +1,9 @@
-﻿using HostsManager.Models;
+﻿using HostsManager.Data;
+using HostsManager.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -29,17 +32,28 @@ namespace HostsManager.Controllers
 
         public void Post(Mapping mapping)
         {
-			_hostsFile.Add(mapping);
+			//_hostsFile.Add(mapping);
         }
 
 		public void Put(int id, Mapping mapping)
         {
-			_hostsFile.Update(mapping, id);
+			//_hostsFile.Update(mapping, id);
         }
+
+		[HttpPut]
+		public HttpResponseMessage UpdateCoords(int id, Mapping mapping)
+		{
+			if (mapping.Id != id)
+				return new HttpResponseMessage(HttpStatusCode.Ambiguous);
+
+			_hostsFile.UpdateCoords(mapping);
+
+			return new HttpResponseMessage(HttpStatusCode.OK);
+		}
 
 		public void Delete(int id)
         {
-			_hostsFile.Delete(id);
+			//_hostsFile.Delete(id);
         }
     }
 
@@ -51,26 +65,8 @@ namespace HostsManager.Controllers
 		private readonly string _hostsFileDir;
 		private readonly string _hostsPath;
 
-		private HashSet<Mapping> _mappings = new HashSet<Mapping>(new MappingComparer());
+		private HashSet<Mapping> _mappings;
 		private FileSystemWatcher _watcher;
-
-		private HostsFile()
-		{
-			_hostsFileDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\");
-			_hostsPath = Path.Combine(_hostsFileDir, _hostsFileName);
-
-			_watcher = new FileSystemWatcher(_hostsFileDir, _hostsFileName);
-			_watcher.NotifyFilter = NotifyFilters.LastWrite;
-			_watcher.Changed += _watcher_Changed;
-			_watcher.EnableRaisingEvents = true;
-
-			Read();
-		}
-
-		void _watcher_Changed(object sender, FileSystemEventArgs e)
-		{
-			Read();
-		}
 
 		public static HostsFile Instance
 		{
@@ -78,6 +74,108 @@ namespace HostsManager.Controllers
 			{
 				return _instance.Value;
 			}
+		}
+
+		private HostsFile()
+		{
+			_hostsFileDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\");
+			_hostsPath = Path.Combine(_hostsFileDir, _hostsFileName);
+
+			SyncMappings();
+
+			_watcher = new FileSystemWatcher(_hostsFileDir, _hostsFileName);
+			_watcher.NotifyFilter = NotifyFilters.LastWrite;
+			_watcher.Changed += _watcher_Changed;
+			_watcher.EnableRaisingEvents = true;
+		}
+
+		/// <summary>
+		/// Synchronize the database with the hosts file and update the mappings list.
+		/// </summary>
+		private void SyncMappings()
+		{
+			// get mappings in hosts file
+			List<Mapping> fileMappings = ReadHostsFile();
+
+			// sync db with hosts file
+			using (HostsContext db = new HostsContext())
+			{
+				List<Mapping> dbMappings = db.Mappings.ToList();
+
+				// delete mappings not in hosts file
+				var deletedMappings = dbMappings.Except(fileMappings, new MappingComparerDomain());
+				foreach (Mapping m in deletedMappings)
+				{
+					db.Mappings.Remove(m);
+				}
+
+				// add/update mappings
+				foreach (Mapping m in fileMappings)
+				{
+					Mapping tmp = dbMappings.Where(x => x.Domain == m.Domain).FirstOrDefault();
+					if (tmp == null)
+					{
+						db.Mappings.Add(m);
+					}
+					else if (m.IP != tmp.IP)
+					{
+						tmp.IP = m.IP;
+					}
+				}
+				db.SaveChanges();
+
+				_mappings = new HashSet<Mapping>(db.Mappings.ToList(), new MappingComparer());
+			}
+		}
+
+		private List<Mapping> ReadHostsFile()
+		{
+			string s = "";
+			for (int i = 0; i < 10; i++)
+			{
+				try
+				{
+					using (StringReader sr = new StringReader(File.ReadAllText(_hostsPath)))
+					{
+						s = sr.ReadToEnd();
+					}
+
+					break;
+				}
+				catch (Exception)
+				{
+					System.Threading.Thread.Sleep(1000);
+				}
+			}
+
+			Regex rx = new Regex(@"^(#)?\s*\b((?:[0-9]{1,3}\.){3}[0-9]{1,3})\b\s*\b([a-zA-Z.-]+)\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			MatchCollection mc = rx.Matches(s);
+
+			List<Mapping> mappings = new List<Mapping>();
+			foreach (Match m in mc)
+			{
+				Mapping mapping = new Mapping
+				{
+					Domain = m.Groups[3].Value,
+					IP = m.Groups[2].Value,
+					Active = !m.Groups[1].Success
+				};
+
+				Mapping map = mappings.Find(x => x.Domain == mapping.Domain);
+				if (map != null && map.Active == true)
+				{
+					mapping = map;
+				}
+
+				mappings.Add(mapping);
+			}
+
+			return mappings;
+		}
+
+		void _watcher_Changed(object sender, FileSystemEventArgs e)
+		{
+			SyncMappings();
 		}
 
 		public Mapping Get(string domain, bool onlyActive)
@@ -103,14 +201,38 @@ namespace HostsManager.Controllers
 			Save();
 		}
 
-		public void Update(Mapping newMapping, int id)
+		public void UpdateCoords(Mapping mapping)
 		{
-			Mapping tmp = _mappings.Where(x => x.Id == id).FirstOrDefault();
+			using (HostsContext db = new HostsContext())
+			{
+				Mapping m = db.Mappings.Find(mapping.Id);
+
+				m.XLeft = mapping.XLeft;
+				m.XRight = mapping.XRight;
+				m.YTop = mapping.YTop;
+				m.YBottom = mapping.YBottom;
+
+				db.SaveChanges();
+
+				_mappings.Remove(m);
+				_mappings.Add(m);
+			}
+		}
+
+		public void Update(Mapping mapping)
+		{
+			Mapping tmp = _mappings.Where(x => x.Id == mapping.Id).FirstOrDefault();
 
 			if (tmp != null)
 			{
-				tmp.Active = newMapping.Active;
-				tmp.IP = newMapping.IP;
+				if (mapping.Domain != null)
+					tmp.Domain = mapping.Domain;
+				if (mapping.IP != null)
+					tmp.IP = mapping.IP;
+
+
+				tmp.Active = mapping.Active;
+				tmp.IP = mapping.IP;
 			}
 
 			Save();
@@ -121,41 +243,6 @@ namespace HostsManager.Controllers
 			_mappings.RemoveWhere(x => x.Id == id);
 
 			Save();
-		}
-
-		public void Read()
-		{
-			string s = "";
-			for (int i = 0; i < 10; i++)
-			{
-				try
-				{
-					using (StringReader sr = new StringReader(File.ReadAllText(_hostsPath)))
-					{
-						s = sr.ReadToEnd();
-					}
-
-					break;
-				}
-				catch (Exception)
-				{
-					System.Threading.Thread.Sleep(1000);
-				}
-			}
-
-			Regex rx = new Regex(@"^(#)?\s*\b((?:[0-9]{1,3}\.){3}[0-9]{1,3})\b\s*\b([a-zA-Z.-]+)\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			MatchCollection mc = rx.Matches(s);
-
-			_mappings.Clear();
-			foreach (Match m in mc)
-			{
-				_mappings.Add(new Mapping
-				{
-					Active = !m.Groups[1].Success,
-					Domain = m.Groups[3].Value,
-					IP = m.Groups[2].Value
-				});
-			}
 		}
 
 		public void Save()
@@ -170,7 +257,6 @@ namespace HostsManager.Controllers
 				}
 			}
 
-			Read();
 			_watcher.EnableRaisingEvents = true;
 		}
 	}

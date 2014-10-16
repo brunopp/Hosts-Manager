@@ -1,6 +1,6 @@
 ﻿@{
     Layout = null;
-	string Token = AppState["Token"].ToString();
+	string Token = System.Configuration.ConfigurationManager.AppSettings["token"].ToString();
 }
 
 <!DOCTYPE html>
@@ -10,9 +10,12 @@
     <meta name="viewport" content="width=device-width" />
     <title>Hosts Manager</title>
 </head>
-<body>
+<body style="margin:50px; padding:30px;z-index:10">
     <div>
 		@Token
+
+		<div id="box" style="position:fixed; border-width:2px; border-style: solid; width:200px; margin:5px; padding:3px;">HELLO</div>
+		
     </div>
 </body>
 </html>
