@@ -1,6 +1,6 @@
 ﻿@{
     Layout = null;
-	string Token = AppState["Token"].ToString();
+	string Token = System.Configuration.ConfigurationManager.AppSettings["token"].ToString();
 }
 
 <!DOCTYPE html>
@@ -9,91 +9,6 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>Hosts Manager</title>
-	<script src="~/jquery-2.1.1.min.js"></script>
-	<script>
-		(function ($) {
-			$.fn.drags = function (opt) {
-
-				opt = $.extend({ handle: "", cursor: "move" }, opt);
-
-				if (opt.handle === "") {
-					var $el = this;
-				} else {
-					var $el = this.find(opt.handle);
-				}
-
-				return $el.css('cursor', opt.cursor).on("mousedown", function (e) {
-					if (opt.handle === "") {
-						var $drag = $(this).addClass('draggable');
-					} else {
-						var $drag = $(this).addClass('active-handle').parent().addClass('draggable');
-					}
-
-					var z_idx = $drag.css('z-index'),
-						drg_h = $drag.outerHeight(),
-						drg_w = $drag.outerWidth(),
-						pos_y = $drag.offset().top + drg_h - e.pageY,
-						pos_x = $drag.offset().left + drg_w - e.pageX;
-
-					// reset right and bottom
-					$drag.offset({
-						top: $drag.offset().top,
-						left: $drag.offset().left
-					});
-					$drag.css('right', '');
-					$drag.css('bottom', '');
-
-					$drag.css('z-index', 1000).parents().on("mousemove", function (e) {
-						if (e.which === 1)
-						{
-							$('.draggable').offset({
-								top: e.pageY + pos_y - drg_h,
-								left: e.pageX + pos_x - drg_w
-							}).on("mouseup", function () {
-								$(this).removeClass('draggable').css('z-index', z_idx);
-							});
-						}
-						
-					});
-					e.preventDefault(); // disable selection
-				}).on("mouseup", function () {
-					if (opt.handle === "") {
-						$(this).removeClass('draggable');
-					} else {
-						$(this).removeClass('active-handle').parent().removeClass('draggable');
-					}
-
-					// notify...
-					var d = $(document);
-					var b = $(this);
-
-					// left/top positions to right/bottom positions
-					var topToBottom = d.height() - b.position().top - b.outerHeight(true);
-					var leftToRight = d.width() - b.position().left - b.outerWidth(true);
-
-					var middleXPoint = b.position().left + b.outerWidth() / 2;
-					var middleYPoint = b.position().top + b.outerHeight() / 2;
-
-					var isOnRightSide = middleXPoint > d.width() / 2;
-					var isOnBottomSide = middleYPoint > d.height() / 2;
-
-					if (isOnRightSide) {
-						b.css('left', '');
-						b.css('right', leftToRight + 'px');
-					}
-					if (isOnBottomSide) {
-						b.css('top', '');
-						b.css('bottom', topToBottom + 'px');
-					}
-				});
-
-			}
-		})(jQuery);
-
-		$(function () {
-			$("#box").drags();
-		});
-	</script>
 </head>
 <body style="margin:50px; padding:30px;z-index:10">
     <div>

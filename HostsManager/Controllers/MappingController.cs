@@ -32,17 +32,28 @@ namespace HostsManager.Controllers
 
         public void Post(Mapping mapping)
         {
-			_hostsFile.Add(mapping);
+			//_hostsFile.Add(mapping);
         }
 
 		public void Put(int id, Mapping mapping)
         {
-			_hostsFile.Update(mapping, id);
+			//_hostsFile.Update(mapping, id);
         }
+
+		[HttpPut]
+		public HttpResponseMessage UpdateCoords(int id, Mapping mapping)
+		{
+			if (mapping.Id != id)
+				return new HttpResponseMessage(HttpStatusCode.Ambiguous);
+
+			_hostsFile.UpdateCoords(mapping);
+
+			return new HttpResponseMessage(HttpStatusCode.OK);
+		}
 
 		public void Delete(int id)
         {
-			_hostsFile.Delete(id);
+			//_hostsFile.Delete(id);
         }
     }
 
@@ -190,14 +201,38 @@ namespace HostsManager.Controllers
 			Save();
 		}
 
-		public void Update(Mapping newMapping, int id)
+		public void UpdateCoords(Mapping mapping)
 		{
-			Mapping tmp = _mappings.Where(x => x.Id == id).FirstOrDefault();
+			using (HostsContext db = new HostsContext())
+			{
+				Mapping m = db.Mappings.Find(mapping.Id);
+
+				m.XLeft = mapping.XLeft;
+				m.XRight = mapping.XRight;
+				m.YTop = mapping.YTop;
+				m.YBottom = mapping.YBottom;
+
+				db.SaveChanges();
+
+				_mappings.Remove(m);
+				_mappings.Add(m);
+			}
+		}
+
+		public void Update(Mapping mapping)
+		{
+			Mapping tmp = _mappings.Where(x => x.Id == mapping.Id).FirstOrDefault();
 
 			if (tmp != null)
 			{
-				tmp.Active = newMapping.Active;
-				tmp.IP = newMapping.IP;
+				if (mapping.Domain != null)
+					tmp.Domain = mapping.Domain;
+				if (mapping.IP != null)
+					tmp.IP = mapping.IP;
+
+
+				tmp.Active = mapping.Active;
+				tmp.IP = mapping.IP;
 			}
 
 			Save();

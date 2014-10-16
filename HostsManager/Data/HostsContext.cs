@@ -11,8 +11,7 @@ namespace HostsManager.Data
 {
 	public class HostsContext : DbContext
 	{
-		public HostsContext()
-			: base(@"server=BRUNO-ANTEC-PC\SQLEXPRESS12;database=hosts;user id=hosts;password=hosts")
+		public HostsContext() : base(ConfigurationManager.ConnectionStrings["sqldb"].ConnectionString)
 		{
 			Debug.Write(Database.Connection.ConnectionString);
 		}

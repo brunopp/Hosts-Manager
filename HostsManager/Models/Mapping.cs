@@ -9,6 +9,11 @@ namespace HostsManager.Models
 {
 	public class Mapping
 	{
+		public Mapping()
+		{
+			ShowInfoBox = true;
+		}
+
 		public int Id { get; set; }
 
 		[MaxLength(254)]
@@ -17,10 +22,8 @@ namespace HostsManager.Models
 		[MaxLength(15)]
 		public string IP { get; set; }
 
-		[DefaultValue(true)]
 		public bool Active { get; set; }
 
-		[DefaultValue(true)]
 		public bool ShowInfoBox { get; set; }
 
 		public int? XLeft { get; set; }

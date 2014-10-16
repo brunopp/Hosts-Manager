@@ -110,7 +110,9 @@
     </Content>
     <Content Include="Global.asax" />
     <Content Include="jquery-2.1.1.min.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
@@ -119,9 +121,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201410152237105_Init.cs" />
-    <Compile Include="Migrations\201410152237105_Init.Designer.cs">
-      <DependentUpon>201410152237105_Init.cs</DependentUpon>
+    <Compile Include="Migrations\201410161454110_Init.cs" />
+    <Compile Include="Migrations\201410161454110_Init.Designer.cs">
+      <DependentUpon>201410161454110_Init.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Mapping.cs" />
@@ -140,8 +142,8 @@
     <Content Include="_AppStart.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201410152237105_Init.resx">
-      <DependentUpon>201410152237105_Init.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201410161454110_Init.resx">
+      <DependentUpon>201410161454110_Init.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

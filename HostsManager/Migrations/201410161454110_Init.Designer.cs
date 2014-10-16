@@ -13,7 +13,7 @@ namespace HostsManager.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201410152237105_Init"; }
+            get { return "201410161454110_Init"; }
         }
         
         string IMigrationMetadata.Source
