@@ -28,18 +28,32 @@
 					} else {
 						var $drag = $(this).addClass('active-handle').parent().addClass('draggable');
 					}
+
 					var z_idx = $drag.css('z-index'),
 						drg_h = $drag.outerHeight(),
 						drg_w = $drag.outerWidth(),
 						pos_y = $drag.offset().top + drg_h - e.pageY,
 						pos_x = $drag.offset().left + drg_w - e.pageX;
+
+					// reset right and bottom
+					$drag.offset({
+						top: $drag.offset().top,
+						left: $drag.offset().left
+					});
+					$drag.css('right', '');
+					$drag.css('bottom', '');
+
 					$drag.css('z-index', 1000).parents().on("mousemove", function (e) {
-						$('.draggable').offset({
-							top: e.pageY + pos_y - drg_h,
-							left: e.pageX + pos_x - drg_w
-						}).on("mouseup", function () {
-							$(this).removeClass('draggable').css('z-index', z_idx);
-						});
+						if (e.which === 1)
+						{
+							$('.draggable').offset({
+								top: e.pageY + pos_y - drg_h,
+								left: e.pageX + pos_x - drg_w
+							}).on("mouseup", function () {
+								$(this).removeClass('draggable').css('z-index', z_idx);
+							});
+						}
+						
 					});
 					e.preventDefault(); // disable selection
 				}).on("mouseup", function () {
@@ -54,8 +68,8 @@
 					var b = $(this);
 
 					// left/top positions to right/bottom positions
-					var leftToRight = d.height() - b.position().top - b.outerHeight(true);
-					var topToBottom = d.width() - b.position().left - b.outerWidth(true);
+					var topToBottom = d.height() - b.position().top - b.outerHeight(true);
+					var leftToRight = d.width() - b.position().left - b.outerWidth(true);
 
 					var middleXPoint = b.position().left + b.outerWidth() / 2;
 					var middleYPoint = b.position().top + b.outerHeight() / 2;
@@ -63,9 +77,14 @@
 					var isOnRightSide = middleXPoint > d.width() / 2;
 					var isOnBottomSide = middleYPoint > d.height() / 2;
 
-
-					console.log(isOnRightSide);
-					console.log(isOnBottomSide);
+					if (isOnRightSide) {
+						b.css('left', '');
+						b.css('right', leftToRight + 'px');
+					}
+					if (isOnBottomSide) {
+						b.css('top', '');
+						b.css('bottom', topToBottom + 'px');
+					}
 				});
 
 			}
@@ -76,11 +95,12 @@
 		});
 	</script>
 </head>
-<body style="margin:50px; padding:30px;">
+<body style="margin:50px; padding:30px;z-index:10">
     <div>
 		@Token
 
 		<div id="box" style="position:fixed; border-width:2px; border-style: solid; width:200px; margin:5px; padding:3px;">HELLO</div>
+		
     </div>
 </body>
 </html>
