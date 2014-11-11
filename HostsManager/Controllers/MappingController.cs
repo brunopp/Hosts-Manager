@@ -117,9 +117,10 @@ namespace HostsManager.Controllers
 					{
 						db.Mappings.Add(m);
 					}
-					else if (m.IP != tmp.IP)
+					else
 					{
 						tmp.IP = m.IP;
+						tmp.Active = m.Active;
 					}
 				}
 				db.SaveChanges();
