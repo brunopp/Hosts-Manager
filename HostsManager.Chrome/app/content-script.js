@@ -23,7 +23,8 @@
 				pos_y = $drag.offset().top + drg_h - e.pageY,
 				pos_x = $drag.offset().left + drg_w - e.pageX;
 
-			// reset right and bottom
+			// on start dragging, right and bottom coordinates may be set.
+			// remove them and set left and right coordinates and use them instead.
 			$drag.offset({
 				top: $drag.offset().top,
 				left: $drag.offset().left

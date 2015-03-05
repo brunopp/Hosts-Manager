@@ -3,10 +3,8 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 	if (changeInfo.status !== 'loading')
 		return;
 
-	var url = tab.url;
-
 	var patt = /^(https?:\/\/)?([^\/]+)/g;
-	var match = patt.exec(url);
+	var match = patt.exec(tab.url);
 
 	if (!match[1])
 		return;
