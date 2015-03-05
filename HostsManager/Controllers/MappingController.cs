@@ -1,4 +1,4 @@
-﻿using HostsManager.Data;
+﻿using Dapper;
 using HostsManager.Models;
 using System;
 using System.Collections.Generic;
@@ -59,6 +59,7 @@ namespace HostsManager.Controllers
 
 	public class HostsFile
 	{
+		private static readonly string sqlConnString = ConfigurationManager.ConnectionStrings["sqldb"].ConnectionString;
 		private static Lazy<HostsFile> _instance = new Lazy<HostsFile>(() => new HostsFile());
 
 		private const string _hostsFileName = "hosts";
@@ -98,34 +99,51 @@ namespace HostsManager.Controllers
 			List<Mapping> fileMappings = ReadHostsFile();
 
 			// sync db with hosts file
-			using (HostsContext db = new HostsContext())
+			using (var db = new SqlConnection(sqlConnString))
 			{
-				List<Mapping> dbMappings = db.Mappings.ToList();
+				db.Open();
 
-				// delete mappings not in hosts file
-				var deletedMappings = dbMappings.Except(fileMappings, new MappingComparerDomain());
-				foreach (Mapping m in deletedMappings)
+				using (var scope = db.BeginTransaction())
 				{
-					db.Mappings.Remove(m);
-				}
-
-				// add/update mappings
-				foreach (Mapping m in fileMappings)
-				{
-					Mapping tmp = dbMappings.Where(x => x.Domain == m.Domain).FirstOrDefault();
-					if (tmp == null)
+					try
 					{
-						db.Mappings.Add(m);
+						List<Mapping> dbMappings = db.Query<Mapping>("SELECT * FROM [dbo].[Mappings]", null, scope).ToList();
+
+						// delete mappings not in hosts file
+						var deletedMappings = dbMappings.Except(fileMappings, new MappingComparerDomain());
+						foreach (Mapping m in deletedMappings)
+						{
+							db.Execute("DELETE FROM [dbo].[Mappings] WHERE Id = @id", new { id = m.Id }, scope);
+						}
+
+						// add/update mappings
+						foreach (Mapping m in fileMappings)
+						{
+							Mapping tmp = dbMappings.Where(x => x.Domain == m.Domain).FirstOrDefault();
+							if (tmp == null)
+							{
+								db.Execute("INSERT INTO [dbo].[Mappings] ([Domain], [IP], [Active], [ShowInfoBox], [XLeft], [XRight], [YTop], [YBottom]) VALUES (@Domain, @IP, @Active, @ShowInfoBox, @XLeft, @XRight, @YTop, @YBottom)", m, scope);
+							}
+							else
+							{
+								db.Execute("UPDATE [dbo].[Mappings] SET [IP] = @IP, [Active] = @Active WHERE Id = @Id", m, scope);
+							}
+						}
+						var updatedMappings = db.Query<Mapping>("SELECT * FROM [dbo].[Mappings]", null, scope);
+
+						_mappings = new HashSet<Mapping>(updatedMappings, new MappingComparer());
+
+						scope.Commit();
 					}
-					else
+					catch (Exception)
 					{
-						tmp.IP = m.IP;
-						tmp.Active = m.Active;
+						scope.Rollback();
+					}
+					finally
+					{
+						db.Close();
 					}
 				}
-				db.SaveChanges();
-
-				_mappings = new HashSet<Mapping>(db.Mappings.ToList(), new MappingComparer());
 			}
 		}
 
@@ -204,19 +222,22 @@ namespace HostsManager.Controllers
 
 		public void UpdateCoords(Mapping mapping)
 		{
-			using (HostsContext db = new HostsContext())
+			using (var db = new SqlConnection(sqlConnString))
 			{
-				Mapping m = db.Mappings.Find(mapping.Id);
+				db.Open();
 
-				m.XLeft = mapping.XLeft;
-				m.XRight = mapping.XRight;
-				m.YTop = mapping.YTop;
-				m.YBottom = mapping.YBottom;
+				db.Execute("UPDATE [dbo].[Mappings] SET [XLeft] = @XLeft, [XRight] = @XRight, [YTop] = @YTop, [YBottom] = @YBottom WHERE Id = @Id", mapping);
 
-				db.SaveChanges();
+				if (_mappings.Contains(mapping))
+				{
+					var m = _mappings.SingleOrDefault(x => x.Id == mapping.Id);
+					m.XLeft = mapping.XLeft;
+					m.XRight = mapping.XRight;
+					m.YTop = mapping.YTop;
+					m.YBottom = mapping.YBottom;
+				}
 
-				_mappings.Remove(m);
-				_mappings.Add(m);
+				db.Close();
 			}
 		}
 
