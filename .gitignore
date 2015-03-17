@@ -187,3 +187,5 @@ FakesAssemblies/
 
 #thumbs
 Thumbs.db
+
+connections.config
