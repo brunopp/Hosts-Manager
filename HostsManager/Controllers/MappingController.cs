@@ -126,6 +126,7 @@ namespace HostsManager.Controllers
 							}
 							else
 							{
+								m.Id = tmp.Id;
 								db.Execute("UPDATE [dbo].[Mappings] SET [IP] = @IP, [Active] = @Active WHERE Id = @Id", m, scope);
 							}
 						}
